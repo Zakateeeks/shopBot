@@ -34,3 +34,8 @@ async def view_profile(callback: CallbackQuery, session: AsyncSession):
     await callback.message.edit_text(text=text, reply_markup=profile_menu())
     await callback.answer()
 
+@router.callback_query(MenuUser.filter(F.action == "main"))
+async def view_main(callback: CallbackQuery):
+    text = (f"Добро пожаловать в магазин Lovess!\n"
+            f"У нас вы найдёте всё, от машин, до тортов!\n")
+    await callback.message.edit_text(text=text, reply_markup=start_menu())

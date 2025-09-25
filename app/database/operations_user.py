@@ -24,3 +24,26 @@ async def update_user(session: AsyncSession,tg_id: str, contact_name: str, conta
     await session.commit()
     await session.refresh(user)
 
+
+async def add_to_basket(session: AsyncSession, tg_id: str, product_id: int, count: int = 1) -> User | None:
+    user = await get_user_by_tg_id(session, tg_id)
+    basket = user.basket or []
+
+    new_basket = list(basket)
+
+    found = False
+    for item in new_basket:
+        if item["id"] == product_id:
+            item["count"] += count
+            found = True
+            break
+
+    if not found:
+        new_basket.append({"id": product_id, "count": count})
+
+    user.basket = new_basket
+
+    await session.commit()
+    await session.refresh(user)
+
+    return user

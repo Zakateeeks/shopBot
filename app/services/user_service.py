@@ -5,7 +5,6 @@ class UserService:
     """
     Сервис для работы с пользователями (business logic).
     """
-
     def __init__(self, session: AsyncSession):
         self.session = session
 
@@ -22,3 +21,5 @@ class UserService:
             contact_address=contact_address,
             contact_phone=contact_phone
         )
+    async def add_to_basket(self, tg_id: str, product_id: int, count: int = 1) -> models.User:
+        return await operations_user.add_to_basket(self.session, tg_id, product_id=product_id, count=count)
