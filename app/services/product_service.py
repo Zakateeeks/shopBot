@@ -26,3 +26,5 @@ class ProductService:
 
     async def get_basket(self, username: str) -> list | None:
         return await get_product_from_basket(self.session, username)
+    async def remove_from_basket(self, username: str, product_id: int) -> User | None:
+        return await remove_product_from_basket(self.session, username, product_id)

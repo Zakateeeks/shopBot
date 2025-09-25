@@ -54,3 +54,20 @@ async def get_product_from_basket(session: AsyncSession, username: str) -> list 
         .where (User.tg_id == username)
     )
     return [row[0] for row in result.all()]
+
+async def remove_product_from_basket(session: AsyncSession, username: str, product_id: int) -> User | None:
+    result = await session.execute(
+        select(User)
+        .where (User.tg_id == username)
+    )
+    user= result.scalars().first()
+
+    basket = user.basket
+    new_basket = []
+    for item in basket:
+        if item["id"] != product_id:
+            new_basket.append(item)
+
+    user.basket = new_basket
+    await session.commit()
+    await session.refresh(user)

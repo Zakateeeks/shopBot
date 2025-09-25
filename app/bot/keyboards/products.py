@@ -45,3 +45,37 @@ def view_categories(categories: list) -> InlineKeyboardMarkup | None:
     keyboard.append([InlineKeyboardButton(text='⬅️ Назад', callback_data=MenuUser(action='main', id=0).pack())])
 
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
+
+def navbar_basket(curr_id: int, next_id: int, prev_id: int, idx: int = 0) -> InlineKeyboardMarkup | None:
+    keyboard = []
+    buttons = []
+    if prev_id:
+        buttons.append(
+            InlineKeyboardButton(
+                text="⬅️ Назад",
+                callback_data=MenuUser(index=prev_id, action="basket", id=idx-1).pack()
+            )
+        )
+    if next_id:
+        buttons.append(
+            InlineKeyboardButton(
+                text="Вперёд ➡️",
+                callback_data=MenuUser(index=next_id, action="basket", id=idx+1).pack()
+            )
+        )
+    keyboard.append(buttons)
+
+    keyboard.append([
+        InlineKeyboardButton(
+            text="❌ Удалить из корзины",
+            callback_data=MenuUser(action="remove_from_basket", id=idx,
+                                   index=curr_id).pack()
+        )
+    ])
+    keyboard.append([
+        InlineKeyboardButton(text="👤 Профиль", callback_data=MenuUser(action="profile", id=0).pack()),
+        InlineKeyboardButton(text="🛍 Купить", callback_data=MenuUser(action="buy", id=0).pack()),
+        InlineKeyboardButton(text="🏠 Главная", callback_data=MenuUser(action="main", id=0).pack())
+    ])
+
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
