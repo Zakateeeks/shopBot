@@ -1,5 +1,5 @@
 from aiogram import Router, F
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, InputMediaPhoto
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bot.keyboards.products import view_categories, navbar_product, navbar_basket
@@ -8,13 +8,15 @@ from app.services.product_service import ProductService
 from app.services.user_service import UserService
 
 router = Router()
+#ToDo обернуть в try message.edit_text
 
 @router.callback_query(MenuUser.filter(F.action == "catalog"))
 async def choice_category(callback: CallbackQuery, session: AsyncSession):
     service = ProductService(session)
     categories = await service.get_all_categories()
 
-    await callback.message.edit_text("Товары какой категории вы хотите посмотреть?", reply_markup=view_categories(categories))
+    await callback.message.edit_text("Товары какой категории вы хотите посмотреть?",
+                                     reply_markup=view_categories(categories))
 
 @router.callback_query(MenuUser.filter(F.action == "view_prod"))
 async def view_catalog(callback: CallbackQuery,callback_data: MenuUser, session: AsyncSession):
@@ -38,11 +40,34 @@ async def view_catalog(callback: CallbackQuery,callback_data: MenuUser, session:
 
     keyboard = navbar_product(product.id, prev_id, next_id, category)
 
-    await callback.message.edit_text(
-        text=f"Товар: {product.name}\nЦена: {product.price}",
-        reply_markup=keyboard
-    )
-    await callback.answer()
+    if product.photo:
+        media = InputMediaPhoto(
+            media=product.photo,
+            caption=f"📦 {product.name}\n💰 Цена: {product.price}\n\n"
+                    f"{product.description or ''}\n🔢Количество: {product.count}"
+        )
+        try:
+            await callback.message.edit_media(media=media, reply_markup=keyboard)
+        except Exception:
+            await callback.message.edit_text(
+                text=f"📦 {product.name}\n💰 Цена: {product.price}\n\n"
+                     f"{product.description or ''}\n🔢Количество: {product.count}",
+                reply_markup=keyboard
+            )
+    else:
+        try:
+            await callback.message.edit_text(
+                text=f"📦 {product.name}\n💰 Цена: {product.price}\n\n"
+                     f"{product.description or ''}\n🔢Количество: {product.count}",
+                reply_markup=keyboard
+            )
+        except Exception:
+            await callback.message.delete()
+            await callback.message.answer(
+                text=f"📦 {product.name}\n💰 Цена: {product.price}\n\n{
+                product.description or ''}\n🔢Количество: {product.count}",
+                reply_markup=keyboard
+            )
 
 @router.callback_query(MenuUser.filter(F.action == "add_to_basket"))
 async def add_to_basket(callback: CallbackQuery, callback_data: MenuUser, session: AsyncSession):
@@ -50,7 +75,7 @@ async def add_to_basket(callback: CallbackQuery, callback_data: MenuUser, sessio
     service_product = ProductService(session)
     product = await service_product.get_product(callback_data.index)
     await callback.answer(text=f"{product.name} помещен в корзину", show_alert=True)
-    await service_user.add_to_basket(callback.from_user.username, product.id, 1)
+    await service_user.add_to_basket(callback.from_user.username, product.id, 1, product.price)
 
 @router.callback_query(MenuUser.filter(F.action == "basket"))
 async def get_basket(callback: CallbackQuery, callback_data: MenuUser, session: AsyncSession):
@@ -64,11 +89,12 @@ async def get_basket(callback: CallbackQuery, callback_data: MenuUser, session: 
         await callback.answer(text=f"В корзине ничего нет", show_alert=True)
         return
 
+    all_price = [row["price"] for row in basket]
+    sum_all_price = sum(all_price)
     product = await service_product.get_product(product_ids[this_id])
     prev_id = None if this_id == 0 else product_ids[this_id - 1]
     next_id = None if this_id == len(product_ids)-1 else product_ids[this_id + 1]
-
-    keyboard = navbar_basket(product_ids[this_id], next_id, prev_id, this_id)
+    keyboard = navbar_basket(product_ids[this_id], next_id, prev_id, this_id, sum_all_price)
     await callback.message.edit_text(
         text=f"Товар:{product.name}",
         reply_markup=keyboard

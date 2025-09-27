@@ -21,5 +21,5 @@ class UserService:
             contact_address=contact_address,
             contact_phone=contact_phone
         )
-    async def add_to_basket(self, tg_id: str, product_id: int, count: int = 1) -> models.User:
-        return await operations_user.add_to_basket(self.session, tg_id, product_id=product_id, count=count)
+    async def add_to_basket(self, tg_id: str, product_id: int, count: int = 1, price: int = 0) -> models.User:
+        return await operations_user.add_to_basket(self.session, tg_id, product_id=product_id, count=count, price=price)

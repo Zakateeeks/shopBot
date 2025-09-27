@@ -46,9 +46,15 @@ def view_categories(categories: list) -> InlineKeyboardMarkup | None:
 
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
-def navbar_basket(curr_id: int, next_id: int, prev_id: int, idx: int = 0) -> InlineKeyboardMarkup | None:
+def navbar_basket(curr_id: int, next_id: int, prev_id: int, idx: int = 0, prices: str= 0) -> InlineKeyboardMarkup | None:
     keyboard = []
     buttons = []
+    keyboard.append([
+        InlineKeyboardButton(
+            text=f"Общая стоимость: {prices}",
+            callback_data=MenuUser(action="-").pack()
+        )
+    ])
     if prev_id:
         buttons.append(
             InlineKeyboardButton(
